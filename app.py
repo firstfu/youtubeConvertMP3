@@ -5,7 +5,7 @@ import streamlit as st
 from moviepy.editor import AudioFileClip
 
 
-def download_mp3(url):
+def download_mp3(url, key):
     try:
         youtube = pytube.YouTube(url)
         audio_stream = youtube.streams.filter(only_audio=True).first()
@@ -23,7 +23,7 @@ def download_mp3(url):
         with open(mp3_file, "rb") as f:
             bytes = f.read()
             st.download_button(
-                label=f"Download {title}.mp3",
+                label="下載MP3",
                 data=bytes,
                 file_name=f"{title}.mp3",
                 mime="audio/mpeg",
@@ -35,16 +35,30 @@ def download_mp3(url):
         return False
 
 
+def add_text_area():
+    if "num_text_areas" not in st.session_state:
+        st.session_state.num_text_areas = 1
+    else:
+        st.session_state.num_text_areas += 1
+
+
 def main():
-    st.title("YouTube to MP3 Downloader")
+    st.title("YouTube轉MP3下載器")
 
-    urls = st.text_area("Enter YouTube URLs (one URL per line):")
-    urls = urls.strip().split("\n")
+    st.button("新增", on_click=add_text_area)
 
-    if st.button("Download MP3"):
-        for url in urls:
-            if download_mp3(url):
-                st.success(f"MP3 downloaded successfully for URL: {url}")
+    for i in range(st.session_state.get("num_text_areas", 1)):
+        with st.container():
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                url = st.text_area(f"Paste a YouTube URL here #{i+1}:", key=f"url_{i}")
+            with col2:
+                download_button_key = f"download_button_{i}"
+                if st.button("轉換", key=download_button_key):
+                    download_mp3(url, download_button_key)
+
+            if url:
+                st.video(url)
 
 
 if __name__ == "__main__":
